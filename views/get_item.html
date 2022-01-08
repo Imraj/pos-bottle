@@ -1,0 +1,220 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} Item {% endblock %}
+
+{% block content %}
+
+    <div class="container" id="app">
+       
+        <div class="row" style="margin-top: 2em;">
+            <div class="col-md-12">
+                <h5>Item </h5>
+                <b-table striped hover :fields="fields" :items="items">
+
+                    <template #cell(del)="data">
+                      <span><i v-on:click="removeItem(data.index)" class="fas fa-minus-circle"></i></span>   
+                    </template>
+
+                    <template #cell(id)="data">
+                        [[data.item.id]]
+                    </template>
+              
+                    <template #cell(name)="data">
+                      <span @click="toggleEdit(data.item.name, data.index, data.item.editName, 'name' )" v-show="!data.item.editName">[[data.item.name]]</span>
+                      <input v-on:blur="saveEdit(this, data.item.name, data.index, data.item.editName, 'name', data.item.id)" v-show="data.item.editName" v-model="data.item.name" type="text" />
+                    </template>
+    
+                    <template #cell(category)="data">
+                        <span @click="toggleEdit(data.item.category, data.index, data.item.editCat, 'category')" v-show="!data.item.editCat"> [[ data.item.category ]]</span>
+                        <input v-on:blur="saveEdit(this, data.item.category, data.index, data.item.editCat, 'category', data.item.id)" v-show="data.item.editCat" v-model="data.item.category" type="text" />
+                    </template>
+              
+                    <template #cell(price)="data">
+                        <span @click="toggleEdit(data.item.price, data.index, data.item.editPrice, 'price')" v-show="!data.item.editPrice">[[ data.item.price ]]</span>
+                      <input v-on:blur="saveEdit(this, data.item.price, data.index, data.item.editPrice, 'price', data.item.id)" v-show="data.item.editPrice" v-model="data.item.price" type="text" />
+                    </template>
+        
+                    <template #cell(quantity)="data">
+                        <span @click="toggleEdit(data.item.quantity, data.index, data.item.editQty, 'quantity')" v-show="!data.item.editQty">[[ data.item.quantity]]</span>
+                      <input v-on:blur="saveEdit(this, data.item.quantity, data.index, data.item.editQty, 'quantity', data.item.id)" v-show="data.item.editQty" v-model="data.item.quantity" type="text" />
+                    </template>
+                    
+                    <template #cell(show)="data">
+                        <b-link href="/item/9103"><i class="fas fa-chevron-right"></i></span></b-link>
+                    </template>
+        
+                </b-table>
+            </div>
+        </div>
+        <h5>Item Transactions</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <b-form-group
+                    label=""
+                    label-for="filter-input"
+                    label-cols-sm="3"
+                    label-align-sm="right"
+                    label-size="sm"
+                    class="mb-0">
+                    <b-input-group size="sm">
+                        <b-form-input
+                            id="filter-input"
+                            v-model="filter"
+                            type="search"
+                            placeholder="Filter..."
+                        ></b-form-input>
+
+                        <b-input-group-append>
+                        <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+                        </b-input-group-append>
+                    </b-input-group>
+                </b-form-group>
+            </div>
+           
+        </div>
+        <div>
+            <b-table striped hover 
+                     :fields="tfields" 
+                     :items="transactions"
+                     :filter="filter"
+                     :filter-included-fields="filterOn"
+                     @filtered="onFiltered"
+                     :current-page="currentPage"
+                     :per-page="perPage">
+
+            </b-table>
+
+            <b-row>
+                <b-col sm="5" md="6"></b-col>
+                <b-col sm="7" md="6" class="my-1">
+                    <b-pagination
+                        v-model="currentPage"
+                        :total-rows="totalRows"
+                        :per-page="perPage"
+                        align="fill"
+                        size="sm"
+                        class="my-0"
+                        v-show="totalRows > perPage"
+                    >
+                    </b-pagination>
+                </b-col>
+            </b-row>
+
+        </div>
+    </div>
+
+    <script type="application/javascript">
+
+        new Vue({
+            delimiters : ['[[',']]'],
+            el: "#app",
+            data: {
+                fields: [{key: 'del', label: '-'}, 'id', 'name', 'price', 'quantity', 'category'],
+                items: [
+                    
+                ],
+                tfields: [ {key: 'transactionId', label:'Transaction Id'}, 
+                        {key: 'dateTime', label:'Transaction DateTime'}, 
+                        {key: 'itemId', label:'Item Id'},
+                        {key: 'price', label:'Item Price'}, 
+                        {key: 'quantity', label:'Quantity Sold'}],
+                transactions: [
+                
+                ],
+                idcode : window.location.pathname.split("/")[2],
+                filter: null,
+                filterOn: [],
+                currentPage: 1,
+                totalRows: 1,
+                perPage: 10
+            },
+            mounted: async function(){
+                this.getItem()
+                this.getItemTransactions()
+                this.totalRows = this.transactions.length
+            },
+            methods: {
+                async getItemTransactions(){
+                    const response = await fetch("/get_item_transaction_api/" + this.idcode);
+                    const data = await response.json();
+                
+                    let transactions = data["transactions"]
+                    console.log("transactions::", transactions)
+                    //Trans_ID,Creation_datetime,item_idcode,item_price,sold_item_qty
+                    for( var i in transactions){
+                        let transaction = transactions[i]
+                        let id = transaction[0]
+                        let dateTime = transaction[1]
+                        let item_idcode = transaction[2]
+                        let item_price = transaction[3]
+                        let qty = transaction[4]
+                        this.transactions.push({ transactionId: id, dateTime: dateTime, itemId: item_idcode, price: item_price, quantity: qty})
+                    }
+                },
+
+                async getItem(){
+                    //console.log("window.location::",this.idcode)
+                    const response = await fetch("/item_api/" + this.idcode);
+                    const data = await response.json();
+                    let id = data["Id"]
+                    let name = data["name"]
+                    let cat = data["Category"]
+                    let price = data["Price"]
+                    let qty = data["Qty"]
+                    this.items.push({ del: 'test', id: id, name: name, category: cat, price: price, quantity: qty, editName: false, editCat: false, editPrice: false, editQty: false, show: 'test', id: id})
+                },
+
+                toggleEdit: function(val,index,ed,section){
+                  //console.log("Item:", parseInt(index))
+                  if(section == 'name'){
+                    this.items[index].editName = !ed
+                  }
+                  else if(section == 'category'){
+                    this.items[index].editCat = !ed
+                  }
+                  else if(section == 'price'){
+                    this.items[index].editPrice = !ed
+                  }
+                  else if(section == 'quantity'){
+                    this.items[index].editQty = !ed
+                  }
+                  
+                  //console.log("NewEd:", ed)
+                },
+
+                saveEdit: async function(self,val,index,ed, section, itemId){
+
+                    if(section == 'name'){
+                        this.items[index].editName = !ed
+                        let response = await fetch("/api/update_item_name/"+itemId+"/"+val)
+                    }
+                    else if(section == 'category'){
+                        this.items[index].editCat = !ed
+                        let response = await fetch("/api/update_item_category/"+itemId+"/"+val)
+                    }
+                    else if(section == 'price'){
+                        this.items[index].editPrice = !ed
+                        let response = await fetch("/api/update_item_price/"+itemId+"/"+val)
+                    }
+                    else if(section == 'quantity'){
+                        this.items[index].editQty = !ed
+                        let response = await fetch("/api/update_item_quantity/"+itemId+"/"+val)
+                    }
+                    this.toggleEdit(val, index, ed)
+                  //this.items[index].total = this.getTotal(index)
+                },
+
+                onFiltered(filteredItems) {
+                    // Trigger pagination to update the number of buttons/pages due to filtering
+                    this.totalRows = filteredItems.length
+                    this.currentPage = 1
+                }
+
+            }
+        })
+
+    </script>
+
+
+
+{% endblock %}

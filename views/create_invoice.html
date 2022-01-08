@@ -1,0 +1,167 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} New Invoice {% endblock %}
+
+{% block content %}
+
+    <div class="container" id="app">
+        <div class="row" style="margin-top: 1em;">
+            <div class="col-md-1"></div>
+            <div class="col-md-10">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="inventoryId" class="form-label">Inventory Id</label>
+                                <input type="text" class="form-control" id="inventoryId" v-model="inv.inventoryId" name="inventoryId" placeholder="Enter Inventory Id" />
+                            </div>
+                          </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="cashier" class="form-label">Cashier</label>
+                            <input type="text" class="form-control" id="cashier" v-model="inv.cashier" name="cashier" placeholder="Enter Cashier Id" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cashier" class="form-label">Customer PNO</label>
+                                <input type="text" class="form-control" id="customer" v-model="inv.customer" name="customer" placeholder="Enter Customer PNO" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="store" class="form-label">Store Name</label>
+                                <input type="text" class="form-control" id="store" v-model="inv.store" name="store" placeholder="Enter Store Name" />
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="payment" class="form-label">Payment Method</label>
+                                <select class="form-select" v-model="inv.paymentMethod" name="paymentMethod">
+                                    <option selected>Select Payment Method</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="visa">Visa</option>
+                                    <option value="mada">Mada</option>
+                                    <option value="visa">Visa</option>
+                                  </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6" >
+                            <div class="mb-3" v-show="inv.paymentMethod == 'cash' ">
+                                <label for="paymentId" class="form-label">Payment Id</label>
+                                <input type="text" class="form-control" id="paymentId" v-model="inv.paymentId" name="paymentId" placeholder="Enter Payment Id" />
+                            </div>
+                        </div>
+                    </div>
+                   
+                </form>
+            </div>
+            <div class="col-md-1"></div>
+        </div>
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-9">
+                <div ref="invoice">
+                    <b-table :items="cart" :fields="fields">
+
+                    </b-table>
+
+                    <div class="row">
+                        <div class="col-md-4"></div>
+                        <div class="col-md-4"><b>SubTotal:</b></div>
+                        <div class="col-md-4"> [[ total ]]</div>
+                    </div><br/>
+                    <div class="row">
+                        <div class="col-md-4"></div>
+                        <div class="col-md-4"><b>Tax:</b></div>
+                        <div class="col-md-4"> 0.5%</div>
+                    </div><br/>
+                    <div class="row">
+                        <div class="col-md-4"></div>
+                        <div class="col-md-4"><b>Discount:</b></div>
+                        <div class="col-md-4"> 0 </div>
+                    </div><br/>
+                    <div class="row">
+                        <div class="col-md-4"></div>
+                        <div class="col-md-4"><b>Total:</b></div>
+                        <div class="col-md-4"> [[ total ]]</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+        
+        <br/>
+        <div class="row">
+                <div class="col-md-1"></div>
+                <div class="col-md-9 float-end">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" @click="saveInvoice()" type="button">Save Invoice</button>
+                        <br/>
+                        <button class="btn btn-primary" v-show="download_inv == true" @click="downloadInvoice()" type="button">Download Invoice</button>
+                    </div>
+                </div>
+                <div class="col-md-2"></div>
+        </div><br/>
+    </div>
+
+    <script type="application/javascript">
+
+        new Vue({
+            delimiters : ['[[',']]'],
+            el: "#app",
+            data: {
+                fields: ['Qty', 'Item', 'Amt'],
+                items: [
+                    //{Qty: 1, Item: 'ball1', Amt: 20},
+                ],
+                total: 0,
+                cart: [],
+                inv: {
+                    inventoryId: '',
+                    cashier: '',
+                    customer: '',
+                    paymentId: '',
+                    paymentMethod: '',
+                    store: '',
+                },
+                download_inv: false
+            },
+            mounted: function(){
+                this.items = JSON.parse(window.localStorage.getItem('items'));
+                
+                for(let i in this.items){
+                    let item = this.items[i]
+                    console.log("this.items::", item)
+                    let amount = item['total']
+                    let name = item['name']
+                    let quantity = item['quantity']
+                    let Id = item['id']
+                    console.log("Item:", amount)
+                    this.total += amount
+                    this.cart.push({Qty: quantity, Item:Id, Amt: amount})
+                }
+            },
+            methods: {
+                async saveInvoice(){
+                    let url = "/api/save_invoice/"+inv.inventoryId+"/"+inv.cashier+"/"+inv.customer+"/"+inv.paymentId+"/"+inv.paymentMethod+"/"+inv.store
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    this.download_inv = true
+                },
+
+                 
+            }
+        })
+
+    </script>
+
+{% endblock %}

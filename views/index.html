@@ -1,0 +1,101 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} Home {% endblock %}
+
+{% block content %}
+
+   
+    <div class="container" id="#app">
+        <div class="row" style="margin-top:3em;">
+          <div class="card col-md-4" style="max-width: 340px;">
+            <div class="row g-0">
+              <div class="col-md-4">
+                <i class="fas fa-shopping-cart fa-3x"></i>
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <h2 class="card-title">{{ invoices_count }}</h2>
+                  <p class="card-text">Total Sales .</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card col-md-4" style="max-width: 340px;margin-left: 1em;">
+            <div class="row g-0">
+              <div class="col-md-4">
+                <i class="fas fa-cart-arrow-down fa-3x"></i>  
+               
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <h2 class="card-title">{{ transaction_count }}</h2>
+                  <p class="card-text">Total Transaction .</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="card col-md-4" style="max-width: 340px;margin-left: 1em;">
+            <div class="row g-0">
+              <div class="col-md-4">
+                <i class="fas fa-plus-circle fa-3x"></i> 
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <h2 class="card-title">{{ items_count }}</h2>
+                  <p class="card-text">Total Items</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="row" style="margin-top: 2em;">
+          <div class="col-md-6">
+            <div class="d-grid gap-2 col-12 mx-auto">
+              <a href="/new_item" class="btn btn-outline-primary">New Item</a>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-grid gap-2 col-12 mx-auto">
+              <a href="/items" class="btn btn-outline-success">Items</a>
+            </div>
+          </div>
+
+          
+         
+          
+        </div>
+
+        <div class="row" style="margin-top: 2em;">
+          <div class="col-md-6">
+            <div class="d-grid gap-2 col-12 mx-auto">
+              <a href="/invoices" class="btn btn-outline-success">Invoices</a>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="d-grid gap-2 col-12 mx-auto">
+              <a href="/new_cart" class="btn btn-outline-success">New Cart</a>
+            </div>
+          </div>
+          
+        </div>
+
+        <div class="row" style="margin-top: 2em;">
+          <div class="col-md-6">
+            <div class="d-grid gap-2 col-12 mx-auto">
+              <a href="/transactions" class="btn btn-outline-success">Transactions</a>
+            </div>
+          </div>
+        </div>
+
+    </container>
+
+    
+
+{% endblock %}

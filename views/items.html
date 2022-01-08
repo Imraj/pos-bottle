@@ -1,0 +1,248 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} Home {% endblock %}
+
+{% block content %}
+
+   
+    <div class="container" id="app">
+
+        <div style="margin-top: 2em;">
+
+
+            <b-button @click="exportAll()" variant="primary">Export All Item</b-button>
+        
+            <b-form-select v-model="selectedCategory" :options="categoryOptions" size="lg" class="mt-3"></b-form-select>
+        
+            <b-button @click="exportCategory()" variant="outline-primary">Export Category</b-button>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <b-form-group
+                        label=""
+                        label-for="filter-input"
+                        label-cols-sm="3"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-input-group size="sm">
+                            <b-form-input
+                                id="filter-input"
+                                v-model="filter"
+                                type="search"
+                                placeholder="Filter by Item Id or Item Name"
+                            ></b-form-input>
+    
+                            <b-input-group-append>
+                            <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+                            </b-input-group-append>
+                        </b-input-group>
+                    </b-form-group>
+                </div>
+               
+            </div>
+
+            <div class="float-end">
+                <a href="/new_item" class="btn btn-primary">New Item</a>
+            </div>
+            
+            <b-table striped hover 
+                    :fields="fields" 
+                    :items="items"
+                    :filter="filter"
+                    :filter-included-fields="filterOn"
+                    @filtered="onFiltered"
+                    :current-page="currentPage"
+                    :per-page="perPage"
+                    :sort-by.sync="sortBy"
+                    >
+
+                <template #cell(del)="data">
+                  <span><i v-on:click="removeItem(data.index, data.item.id)" class="fas fa-minus-circle"></i></span>   
+                </template>
+          
+                <template #cell(name)="data">
+                  [[data.item.name]]
+                </template>
+
+                <template #cell(category)="data">
+                    [[data.item.category]]
+                  </template>
+          
+                <template #cell(price)="data">
+                  [[ data.item.price ]]
+                </template>
+    
+                <template #cell(quantity)="data">
+                  [[ data.item.quantity]]
+                </template>
+                
+                <template #cell(show)="data">
+                    <b-link :href=" '/item/' + data.item.id "><i class="fas fa-chevron-right"></i></span></b-link>
+                </template>
+    
+            </b-table>
+            <b-row>
+                <b-col sm="5" md="6"></b-col>
+                <b-col sm="7" md="6" class="my-1">
+                    <b-pagination
+                        v-model="currentPage"
+                        :total-rows="totalRows"
+                        :per-page="perPage"
+                        align="fill"
+                        size="sm"
+                        class="my-0"
+                        v-show="totalRows > perPage"
+                    >
+                    </b-pagination>
+                </b-col>
+            </b-row>
+
+            <b-modal v-model="modalShow" @ok="handleOk" title="Delete Item">Are you sure you want to delete this Item?</b-modal>
+
+        </div>
+
+    </div>
+
+    <script type="application/javascript">
+
+        new Vue({
+            delimiters : ['[[',']]'],
+            el: '#app',
+            data: {
+              fields: [{key: 'del', label: '-'},
+                        {key:'id',sortable: true},
+                        {key:'name'}, 
+                        {key:'price', sortable: true}, 
+                        {key:'quantity', sortable: true}, 
+                        {key:'category', sortable: true}, 
+                        {key: 'show', label: '-'}],
+              items: [
+               
+              ],
+              currentDeleteId: -1,
+              currentDeleteIndex: -1,
+              modalShow: false,
+              filter: null,
+              filterOn: [],
+              currentPage: 1,
+              totalRows: 1,
+              perPage: 10,
+              sortBy: '',
+              selectedCategory: null,
+              categoryOptions: []
+              
+            },
+            mounted: async function(){
+                const response = await fetch("/items_api");
+                const data = await response.json();
+               
+                let items = data["items"]
+                
+                for( var i in items){
+                    let item = items[i]
+                    let id = item[0]
+                    let name = item[1]
+                    let cat = item[2]
+                    let price = item[3]
+                    let qty = item[4]
+                    this.categoryOptions.push(cat)
+                    this.items.push({ del: 'test', id: id, name: name, category: cat, price: price, quantity: qty, edit: false, show: 'test', id: id})
+                    //console.log("Array::i ",i,items[i])
+                }
+                this.totalRows = this.items.length
+
+                this.categoryOptions = [...new Set(this.categoryOptions)]
+                this.selectedCategory = this.categoryOptions[0]
+            },
+            methods: {
+                removeItem : function(index, id){
+                    this.modalShow = !this.modalShow
+                    this.currentDeleteId = id
+                    this.currentDeleteIndex = index
+                    //console.log("Hello::",alert("Do you want to delete this Item?"))
+                },
+
+                handleOk: async function(){
+                    let id = this.currentDeleteId
+                    let index = this.currentDeleteIndex
+                    this.items.splice(index,1)
+                    const response = await fetch("/delete_item_api/" + id);
+                    const data = await response.json();
+                },
+
+                onFiltered(filteredItems) {
+                    // Trigger pagination to update the number of buttons/pages due to filtering
+                    this.totalRows = filteredItems.length
+                    this.currentPage = 1
+                },
+
+                downloadCSV(items){
+                    // items is an array of items
+                    items.forEach(function(rowArray) {
+                        let row = rowArray.join(",");
+                        csvContent += row + "\r\n";
+                    });
+                    var encodedUri = encodeURI(csvContent);
+                    window.open(encodedUri);
+                },
+
+                exportCategory(){
+                    let exportedItems = this.items.filter(item=> item.category == this.selectedCategory)
+                    this.exportToCSV(exportedItems, "item-category-"+this.selectedCategory)
+                },
+
+                exportAll(){
+                    /*let csvContent = "data:text/csv;charset=utf-8,";
+                    this.items.forEach(function(rowArray) {
+                        let row = rowArray.join(",");
+                        csvContent += row + "\r\n";
+                    });
+                    var encodedUri = encodeURI(csvContent);
+                    window.open(encodedUri);*/
+                    this.exportToCSV(this.items,"items")
+                },
+
+                objectToCSVRow(dataObject) {
+                    var dataArray = new Array;
+                    for (var o in dataObject) {
+                        var innerValue = dataObject[o]===null?'':dataObject[o].toString();
+                        var result = innerValue.replace(/"/g, '""');
+                        result = '"' + result + '"';
+                        dataArray.push(result);
+                    }
+                    return dataArray.join(' ') + '\r\n';
+                },
+
+                exportToCSV(arrayOfObjects,fileName) {
+
+                    if (!arrayOfObjects.length) {
+                        return;
+                    }
+
+                    var csvContent = "data:text/csv;charset=utf-8,";
+
+                    // headers
+                    csvContent += this.objectToCSVRow(Object.keys(arrayOfObjects[0]));
+
+                    var self = this
+                    arrayOfObjects.forEach(function(item){
+                        csvContent += self.objectToCSVRow(item);
+                    }); 
+
+                    var encodedUri = encodeURI(csvContent);
+                    var link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", fileName+".csv");
+                    document.body.appendChild(link); // Required for FF
+                    link.click();
+                    document.body.removeChild(link); 
+                }
+
+            }
+        })
+
+    </script>
+    
+
+{% endblock %}

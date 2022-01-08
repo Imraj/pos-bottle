@@ -1,0 +1,87 @@
+{% extends 'layout/base2.html' %} 
+
+{% block title %} Login {% endblock %}
+
+{% block content %}
+
+    <div class="container" id="app">
+        <div class="row" style="margin-top: 2em;">
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                
+                {% if res == "reg_success" %}
+                    <div class="alert alert-success" role="alert">
+                        Account Created Succesfully. Login to continue!
+                    </div>
+                {% endif %}
+
+                <div class="alert alert-danger" v-if="error == true" role="alert">
+                    Invalid login details
+                </div>
+                
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label">User Name</label>
+                        <input type="text" class="form-control" name='username' v-model="username" id="username" placeholder="Enter username">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" name='password' v-model="password" id="password" placeholder="Enter password">
+                    </div>
+
+                    <div class="mb-3">
+                        <button @click="login" class="btn btn-primary">Login</button>
+                    </div>
+
+                    <a href="/register">Create New Account</a>
+    
+               
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+
+    </div>
+
+    <script type="application/javascript">
+
+        new Vue({
+            delimiters : ['[[',']]'],
+            el: '#app',
+            data: {
+                username: '',
+                password: '',
+                error: false
+            },
+            methods:{
+                async login(){
+                   
+                    let response = await fetch("/plogin/"+this.username+"/"+this.password)
+                    const data = await response.json();
+                    console.log("login_data:", data["res"], data["user"])
+
+                    if(data["res"] == "sucess"){
+                        let luser = data["user"]
+                        let cashierId = luser[2]
+                        let name = luser[0]
+                        let username = luser[1]
+                        console.log("LL", cashierId, name, username)
+                        window.localStorage.setItem("cashierId", cashierId)
+                        window.localStorage.setItem("name", name)
+                        window.localStorage.setItem("username", username)
+                        window.location.href = "/"
+                    }else{
+                        this.error = true
+                    }
+                    
+
+                    
+
+                }
+            }
+        })
+
+    </script>
+
+
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'layout/base2.html' %}
+
+{% block title %} Create Account {% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row" style="margin-top: 2em;">
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                
+                
+                <form method="post" action="/pregister">
+
+                    <div class="mb-3">
+                        <label for="cashierId" class="form-label">Cashier ID</label>
+                        <input type="text" class="form-control" name='cashierId' id="cashierId" placeholder="Enter Cashier Id">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" name='name' id="name" placeholder="Enter name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label">User Name</label>
+                        <input type="text" class="form-control" name='username' id="username" placeholder="Enter username">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" name='password' id="password" placeholder="Enter password">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="submit" value="Create Account" class="btn btn-primary"/>
+                    </div>
+    
+                </form>
+                <a href="/login">Login</a>
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+
+    </div>
+
+{% endblock %}

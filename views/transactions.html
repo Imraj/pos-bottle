@@ -1,0 +1,184 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} Home {% endblock %}
+
+{% block content %}
+
+   
+    <div class="container" id="app">
+
+        <div style="margin-top: 2em;">
+            <b-button @click="exportAll()" variant="primary">Export All</b-button>
+            
+            <b-form-select v-model="selectedItem" :options="itemOptions" size="lg" class="mt-3"></b-form-select>
+            <b-button @click="exportItem()" variant="outline-primary">Export Item</b-button>
+        
+            <div class="row">
+                <div class="col-md-6">
+                    <b-form-group
+                        label=""
+                        label-for="filter-input"
+                        label-cols-sm="3"
+                        label-align-sm="right"
+                        label-size="sm"
+                        class="mb-0">
+                        <b-input-group size="sm">
+                            <b-form-input
+                                id="filter-input"
+                                v-model="filter"
+                                type="search"
+                                placeholder="Filter..."
+                            ></b-form-input>
+    
+                            <b-input-group-append>
+                            <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+                            </b-input-group-append>
+                        </b-input-group>
+                    </b-form-group>
+                </div>
+            </div>
+
+            <b-table striped hover 
+                    :fields="fields" 
+                    :items="transactions"
+                    :filter="filter"
+                    :filter-included-fields="filterOn"
+                    @filtered="onFiltered"
+                    :current-page="currentPage"
+                    :per-page="perPage"
+                    :sort-by.sync="sortBy"
+                    >
+            </b-table>
+
+            <b-row>
+                <b-col sm="5" md="6"></b-col>
+                <b-col sm="7" md="6" class="my-1">
+                    <b-pagination
+                        v-model="currentPage"
+                        :total-rows="totalRows"
+                        :per-page="perPage"
+                        align="fill"
+                        size="sm"
+                        class="my-0"
+                        v-show="totalRows > perPage"
+                    >
+                    </b-pagination>
+                </b-col>
+            </b-row>
+           
+            
+        </div>
+
+    </div>
+
+    <script type="application/javascript">
+
+        new Vue({
+            delimiters : ['[[',']]'],
+            el: '#app',
+            data: {
+              fields: [ {key: 'transactionId', label:'Transaction Id'}, 
+                        {key: 'dateTime', label:'Transaction DateTime', sortable: true}, 
+                        {key: 'itemId', label:'Item Id'},
+                        {key: 'price', label:'Item Price', sortable: true}, 
+                        {key: 'quantity', label:'Quantity Sold', sortable: true}],
+              transactions: [
+               
+              ],
+              filter: null,
+              filterOn: [],
+              currentPage: 1,
+              totalRows: 0,
+              perPage: 10,
+              sortBy: 'dateTime',
+
+              selectedCategory: '',
+              categoryOptions: [],
+              selectedItem: '',
+              itemOptions: []
+             
+            },
+            mounted: async function(){
+                const response = await fetch("/transactions_api");
+                const data = await response.json();
+               
+                let transactions = data["transactions"]
+                //Trans_ID,Creation_datetime,item_idcode,item_price,sold_item_qty
+                for( var i in transactions){
+                    let transaction = transactions[i]
+                    let id = transaction[0]
+                    let dateTime = transaction[1]
+                    let item_idcode = transaction[2]
+                    let item_price = transaction[3]
+                    let qty = transaction[4]
+                    let cat =transaction[5]
+                    this.itemOptions.push(item_idcode)
+                    this.transactions.push({ transactionId: id, dateTime: dateTime, itemId: item_idcode, price: item_price, quantity: qty})
+                }
+                this.totalRows = this.transactions.length
+                this.itemOptions =[...new Set(this.itemOptions)]
+                this.selectedItem = this.itemOptions[0]
+                
+            },
+            methods: {
+                onFiltered(filteredItems) {
+                    // Trigger pagination to update the number of buttons/pages due to filtering
+                    this.totalRows = filteredItems.length
+                    this.currentPage = 1
+                },
+
+                exportAll(){
+                    this.exportToCSV(this.transactions, "Transactions")
+                },
+
+                exportItem(){
+                    let exportedItems = this.transactions.filter(trans=>trans.itemId == this.selectedItem)
+                    this.exportToCSV(exportedItems, "Transactions-"+this.selectedItem)
+                },
+
+                exportCategory(){
+                    let exportedItems = this.transactions.filter(trans=>trans.itemId == this.selectedCategory)
+                },
+
+                objectToCSVRow(dataObject) {
+                    var dataArray = new Array;
+                    for (var o in dataObject) {
+                        var innerValue = dataObject[o]===null?'':dataObject[o].toString();
+                        var result = innerValue.replace(/"/g, '""');
+                        result = '"' + result + '"';
+                        dataArray.push(result);
+                    }
+                    return dataArray.join(' ') + '\r\n';
+                },
+
+                exportToCSV(arrayOfObjects,fileName) {
+
+                    if (!arrayOfObjects.length) {
+                        return;
+                    }
+
+                    var csvContent = "data:text/csv;charset=utf-8,";
+
+                    // headers
+                    csvContent += this.objectToCSVRow(Object.keys(arrayOfObjects[0]));
+
+                    var self = this
+                    arrayOfObjects.forEach(function(item){
+                        csvContent += self.objectToCSVRow(item);
+                    }); 
+
+                    var encodedUri = encodeURI(csvContent);
+                    var link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", fileName+".csv");
+                    document.body.appendChild(link); // Required for FF
+                    link.click();
+                    document.body.removeChild(link); 
+                }
+            }
+        })
+
+    </script>
+    
+
+{% endblock %}

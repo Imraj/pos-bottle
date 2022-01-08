@@ -1,0 +1,563 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} New Sale {% endblock %}
+
+{% block content %}
+
+    
+
+    <div class="container" id="app" style="margin-top: 2em;">
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="input-group mb-3">
+                    <input type="text" class="form-control" 
+                      v-model="search" 
+                      placeholder="Search"
+                      @input="onChange" 
+                      @keydown.down="onArrowDown"
+                      @keydown.up="onArrowUp"
+                      @keydown.enter="onEnter"
+                     />
+                     <input type="text" class="form-control" 
+                        v-model="search" 
+                        placeholder="Item:"
+                        readonly
+                     />       
+                    
+                    <input type="text" class="form-control" 
+                      v-model="quantity" 
+                      placeholder="Quantity"
+                     >
+                     <button v-on:click="addItemToCart()" class="btn btn-outline-secondary" type="button" id="button-addon2">Add Item to cart</button>
+            </div>
+            <ul v-show="isOpen" class="autocomplete-results">
+              <li
+                v-for="(result, i) in results"
+                :key="i"
+                class="autocomplete-result"
+                @click="setResult(result)"
+                :class="{ 'is-active': i === arrowCounter }"
+              >
+                [[ result ]]
+              </li>
+            </ul>
+          </div> 
+        </div>
+
+        <div class="row" style="margin-top: 2em;">
+          <b-table striped hover :fields="fields" :items="cart">
+
+            <template #cell(del)="data">
+              <span><i v-on:click="removeItem(data.index)" class="fas fa-minus-circle"></i></span>   
+            </template>
+      
+            <template #cell(name)="data">
+              [[data.item.name]]
+            </template>
+      
+            <template #cell(price)="data">
+              [[ data.item.price ]]
+            </template>
+
+            <template #cell(quantity)="data">
+              <span v-on:click="toggleEdit(data.item.quantity, data.index, data.item.edit)" v-show="!data.item.edit">[[ data.item.quantity]]</span>
+              <input v-on:blur="saveEdit(this, data.item.quantity, data.index, data.item.edit)" v-show="data.item.edit" v-model="data.item.quantity" type="text" />
+            </template>
+
+            <template #cell(total)="data">
+              [[ data.item.total ]]
+            </template>
+
+          </b-table>
+
+        </div>
+
+       
+        <div class="row" v-show="cart.length > 0">
+          <div class="col-md-6"></div>
+          <div class="col-md-2">
+            <h5>Live Total:</h5>
+          </div>
+          <div class="col-md-4">
+            <input type="text" class="form-control" 
+                v-model="liveTotal" 
+                placeholder="0"
+                readonly
+              /> 
+          </div> 
+        </div>
+
+        <hr v-show="cart.length > 0"/>
+
+        <div class="row" v-show="cart.length > 0">
+          <div class="col-md-4">
+            <h5>Total(without Tax):</h5>
+          </div>
+          <div class="col-md-4">
+            <input type="text" class="form-control" 
+                v-model="wTaxTotal" 
+                placeholder="0"
+                readonly
+              /> 
+          </div> 
+        </div>
+
+        <div class="row" v-show="cart.length > 0">
+          <div class="col-md-4">
+            <h5>Total(Including Tax):</h5>
+          </div>
+          <div class="col-md-4">
+            <input type="text" class="form-control" 
+                v-model="taxTotal" 
+                placeholder="0"
+                readonly
+              /> 
+          </div> 
+        </div>
+
+        <hr v-show="cart.length > 0"/>
+
+        <div class="row" v-show="cart.length > 0">
+          <div class="col-md-10">
+              <form>
+                  
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                          <label for="customerPNO" class="form-label">Paid Amount</label>
+                          <input type="text" required class="form-control" id="paidAmount" v-model="paidAmount" name="paidAmount" placeholder="Enter Paid Amount" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                          <label for="customerPNO" class="form-label">Customer PNO</label>
+                          <input type="text" required class="form-control" id="customerPNO" v-model="inv.customerPNO" name="customerPNO" placeholder="Enter Customer PNO" />
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="payment" class="form-label">Payment Method</label>
+                            <select class="form-select" v-model="inv.paymentMethod" name="paymentMethod">
+                                <option selected>Select Payment Method</option>
+                                <option value="cash">Cash</option>
+                                <option value="visa">Visa</option>
+                                <option value="mada">Mada</option>
+                                <option value="visa">Visa</option>
+                              </select>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6" >
+                        <div class="mb-3" v-show="inv.paymentMethod != 'cash' ">
+                            <label for="paymentId" class="form-label">Payment Id</label>
+                            <input type="text" class="form-control" id="paymentId" v-model="inv.paymentId" name="paymentId" placeholder="Enter Payment Id" />
+                        </div>
+                      </div>
+                      
+                  </div>
+                  
+                  <div class="row">
+                      
+
+                      
+                  </div>
+                 
+              </form>
+          </div>
+          <div class="col-md-1"></div>
+
+        </div>
+
+        <div id="invoice-POS" ref="invoice" v-show="show_receipt">
+    
+          <center id="top">
+            <div class="logo"></div>
+            <div class="info"> 
+              <h2>SBISTechs Inc</h2>
+              <p align="center"> 
+                  street city, state 0000</br>
+                JohnDoe@gmail.com</br>
+                555-555-5555</br>
+              </p>
+            </div><!--End Info-->
+          </center><!--End InvoiceTop-->
+          
+          <div id="mid" >
+            <div class="info">
+              <p align="left"> 
+                Invoice ID: [[ inv.invoiceId ]] </br>
+                 Invoice Date Time: [[ cdateTime ]]
+                
+              </p>
+              
+            </div>
+          </div><!--End Invoice Mid-->
+          
+          <div id="bot">
+      
+                <div id="table">
+                  <table>
+                    <tr class="tabletitle">
+                      <td class="item"><h2>Item</h2></td>
+                      <td class="Hours"><h2>Qty</h2></td>
+                      <td class="Rate"><h2>Sub Total</h2></td>
+                    </tr>
+      
+                    <tr class="service" v-for="it in cart">
+                      <td class="tableitem"><p class="itemtext">[[it.name]]</p></td>
+                      <td class="tableitem"><p class="itemtext">[[ it.quantity ]]</p></td>
+                      <td class="tableitem"><p class="itemtext">[[ it.price * it.quantity ]]</p></td>
+                    </tr>
+      
+                    <td></td>
+      
+                    <tr class="tabletitle"> 
+      
+                      <td class="Rate" ><h2>Total Ex. TAX</h2></td>
+                      <td class="payment"> <h2>[[ wTaxTotal ]]</h2></td>
+                      <td></td>
+      
+                    </tr>
+                    <div style=" height: 0px;border-bottom:solid 3px #000;"></div>
+      
+                    <tr class="tabletitle">
+                      <td class="Rate"><h2>TAX</h2></td>
+                      <td class="payment">
+                        <h2>[[ 0.05 * wTaxTotal ]]</h2>
+                      </td>
+                      <td></td>
+      
+                    </tr>
+      
+      
+                    <tr class="tabletitle">
+                      <td class="Rate" style='font-size: 12px;'><h2>Total Inc. TAX</h2></td>
+                      <td class="payment" style='font-size: 12px;'><h2>[[ taxTotal ]]</h2></td>
+                                      <td></td>
+      
+                    </tr>
+      
+                  </table>
+                </div><!--End Table-->
+      
+                <div style=" height: 0px;
+                  border-bottom:solid 0.4px #000;"></div>
+                  <div align="left" style='font-size: 11px;'>
+                  - Paid amount: [[ paidAmount ]]
+                  <br/>
+      
+                  - Change: [[ paidAmount - taxTotal ]]
+                  <br/>
+                  <br/>
+      
+                  - Payment Method: [[ inv.paymentMethod ]]
+                  <br/>
+                - Cashier: [[ inv.cashier ]]
+                    
+                  </div>
+                          <div id="legalcopy">
+                          <div style=" height: 0px;
+                  border-bottom:solid 3px #000;"></div>
+                            <p class="legal"><strong>Thank you for your Purchase!</strong>
+      
+                            </p>
+                                         QR CODE AREA
+      
+                          </div>
+      
+          </div><!--End InvoiceBot-->
+        </div><!--End Invoice-->
+      <!-- partial -->
+
+        <div class="row" v-show="cart.length > 0">
+          <div class="col-md-1"></div>
+          <div class="col-md-9 float-end">
+              <div class="d-grid gap-2">
+                  <button class="btn btn-success" @click="saveItemAndInvoice()" :disabled="inv.customerPNO == '' || inv.paymentMethod == '' " type="button">Save Invoice</button>
+              </div>
+          </div>
+          <div class="col-md-2"></div>
+        </div><br/>
+
+        
+
+      </div>
+
+      
+
+      <script type="application/javascript">
+
+          new Vue({
+            delimiters : ['[[',']]'],
+            el: '#app',
+            data: {
+              message: 'Hello Vue!',
+              fields: [{key: 'del', label: '-'}, 'id','name', 'price', 'quantity'],
+              items: [
+                /*{ del: 'test', name: 'Bottle', price: 10, quantity: 1, total: 100, edit: false },
+                { del: 'test', name: 'Ball', price: 10, quantity: 1, total: 100, edit: false },
+                { del: 'test',name: 'Pen', price: 10, quantity: 1, total: 100, edit: false },
+                { del: 'test', name: 'Key', price: 10, quantity: 1, total: 100, edit: false },*/
+              ],
+              cart: [
+                /*{ del: 'test', name: 'Bottle', price: 10, quantity: 4, total: 100, edit: false },
+                { del: 'test', name: 'Ball', price: 10, quantity: 5, total: 100, edit: false },*/
+              ],
+              search: '',
+              results: [],
+              isOpen: false,
+              arrowCounter: -1,
+              quantity: 1,
+              liveTotal: 0,
+              wTaxTotal: 0,
+              taxTotal: 0,
+              inv: {
+                  invoiceId: '',
+                  cashier: '',
+                  customerPNO: '',
+                  paymentId: '-1',
+                  paymentMethod: '',
+                  store: ''
+              },
+              cdateTime: '',
+              download_invoice: true,
+              show_receipt: false,
+              paidAmount: 0
+            },
+            
+
+            mounted: async function(){
+                const response = await fetch("/items_api");
+                const data = await response.json();
+                let items = data["items"]
+                
+                for( var i in items){
+                    let item = items[i]
+                    let id = item[0]
+                    let name = item[1]
+                    let cat = item[2]
+                    let price = item[3]
+                    let qty = item[4]
+                    this.items.push({ del: 'test', name: name, price: price, quantity: this.quantity, edit: false, id: id.toString()})
+                }
+                for(index in this.items){
+                  this.items[index].total = this.items[index].price * this.items[index].quantity
+                }
+                
+            },
+
+            methods: {
+              getTotal: function(index){
+                  p = this.cart[index].price 
+                  qty = this.cart[index].quantity
+                  return p * qty
+              },
+              addItemToCart: function(){
+                let ans = this.items.filter(item => item.id == this.search);
+                let answ = ans[0]
+                this.cart.push({ del: 'test', name: answ['name'], price: answ['price'], quantity: this.quantity, total: 0, edit: false, id: answ['id'].toString()})
+
+                this.arrowCounter = -1;
+                this.isOpen = false;
+                
+                this.liveTotal += (this.quantity * answ['price'])
+                this.wTaxTotal += (this.quantity * answ['price'])
+                this.taxTotal = this.wTaxTotal + (0.05 * (this.wTaxTotal))
+              },
+              
+              onArrowDown() {
+                if (this.arrowCounter < this.results.length) {
+                  this.arrowCounter = this.arrowCounter + 1;
+                  this.search = this.results[this.arrowCounter];
+                }
+              },
+
+              onArrowUp() {
+                if (this.arrowCounter > 0) {
+                  this.arrowCounter = this.arrowCounter - 1;
+                  this.search = this.results[this.arrowCounter];
+                }
+              },
+
+              onEnter() {
+                this.search = this.results[this.arrowCounter];
+
+                //let ans = this.items.filter(item => item.name.toLowerCase() == this.search.toLowerCase());
+                let ans = this.items.filter(item => item.id == this.search);
+                console.log("Answer::", ans[0])
+
+                //this.cart.push(ans[0])
+
+                this.arrowCounter = -1;
+                this.isOpen = false;
+              },
+
+              removeItem : function(index){
+                let ii = this.cart[index]
+                console.log("iiii:",ii)
+                let price = ii.price
+                let qty = ii.quantity
+                let total = price * qty 
+
+                this.liveTotal -= total
+                this.wTaxTotal -= total
+                this.taxTotal = (this.wTaxTotal ) + (0.05 * (this.wTaxTotal ))
+
+                this.cart.splice(index,1)
+                
+              },
+              toggleEdit: function(val,index,ed){
+                  console.log("Item:", parseInt(index))
+                  this.cart[index].edit = !ed
+                  console.log("NewEd:", ed)
+              },
+
+              saveEdit: function(self,val,index,ed){
+                  this.toggleEdit(val, index, ed)
+                  //this.cart[index].total = this.getTotal(index)
+                  
+                  let p = this.cart[index].price 
+                  let qty = this.cart[index].quantity
+                  let new_total = this.cart[index].price * qty
+                  let old_total = this.cart[index].price * this.quantity
+
+                  console.log("P,Q,N,O",p,qty,new_total,old_total)
+
+                  console.log("P,Q,N,O",p,qty,new_total,old_total)
+
+                  this.liveTotal -= old_total
+                  this.wTaxTotal -= old_total
+                  this.taxTotal = (this.wTaxTotal) + (0.05 * (this.wTaxTotal))
+
+                  this.liveTotal += new_total
+                  this.wTaxTotal += new_total
+                  this.taxTotal = (this.wTaxTotal) + (0.05 * (this.wTaxTotal))
+
+                  //this.cart[index].quantity = this.quantity
+
+              },
+
+              setResult(result) {
+                this.search = result;
+                this.isOpen = false;
+            
+                this.arrowCounter = -1;
+                this.isOpen = false;
+              },
+
+              filterResults() {
+                //this.results = this.items.filter(item => item.name.toLowerCase().indexOf(this.search.toLowerCase()) > -1);
+                this.results = this.items.filter(item => item.id.indexOf(this.search) > -1);
+                let res = this.results
+                this.results = []
+                for(r in res){
+                  this.results.push(res[r].id)
+                }
+                console.log("Result:", this.results)
+              },
+
+              onChange() {
+                if(this.search == '' || this.search == ' '){
+                  this.results = []
+                  this.isOpen = false
+                }
+                else{
+                  this.filterResults();
+                  this.isOpen = true;
+                } 
+              },
+
+              downloadInvoice(){
+                  const { jsPDF } = window.jspdf;
+                  var doc = new jsPDF('p', 'pt', 'A4');
+                  margins = {
+                      top: 80,
+                      bottom: 60,
+                      left: 40,
+                      width: 200
+                  };
+
+                  doc.html(this.$refs.invoice, 
+                      {
+                          callback: function(doc) {
+                              doc.save(new Date().getTime() + '.pdf');
+                          },
+                      x: 150,
+                      y: 100
+                      }
+                  );   
+              },
+
+              async saveInvoice(){
+                // /api/save_invoice/<invId>/<cartItems>/<cartPrices>/<cartQty>/<totalPrice>/<Tax>/
+                //<customerPNO>"+
+                // "/<paymentMethod>/<paymentId>/<cashierIdName>
+                
+                  let cartItems = ''
+                  let cartPrices = ''
+                  let cartQty = ''
+                  //console.log("this.cartcart:", this.cart)
+                  for(let k in this.cart){
+                     let cc = this.cart[k]
+                     console.log("CC:", cc, cc['id'], cc['price'], cc['quantity'])
+                     cartItems +=  cc['id'].toString() + ")"
+                     cartPrices += cc['price'].toString() + ")"
+                     cartQty +=  cc['quantity'].toString() + ')'
+                  }
+                  console.log("JJJ:", cartItems, cartPrices, cartQty)
+                  let invoiceId = new Date().getTime() + Math.floor(Math.random() * 1000);
+                  this.inv.invoiceId = invoiceId
+                  let totalPrice = this.wTaxTotal
+                  let tax = 0.05
+                  let customerPNO = this.inv.customerPNO
+                  let paymentMethod = this.inv.paymentMethod
+                  let paymentId = this.inv.paymentId 
+                  let cashierIdName = window.localStorage.getItem("cashierId")
+                  this.inv.cashier = cashierIdName
+                  this.cdateTime = new Date()
+                  let url = "/api/save_invoice/"+invoiceId+"/"+cartItems+"/"+cartPrices+"/" 
+                                                +cartQty+"/"+totalPrice+"/"+tax+"/" + this.cdateTime + "/"
+                                                +customerPNO+"/"+paymentMethod+"/" + this.paidAmount + "/"
+                                                +paymentId + "/" + cashierIdName
+                  
+                  const response = await fetch(url);
+                  const data = await response.json();
+              },
+
+              async saveItemTransaction(items){
+                for(var i in items){
+                    let item  = items[i]
+                    let idcode = item['id']
+                    let itemPrice = item['price']
+                    let soldItemQty = item['quantity']
+                    //console.log("saveItemTrans:",item, idcode, itemPrice, soldItemQty)
+                    let url = "/api/save_transaction/"+idcode+"/"+itemPrice+"/"+soldItemQty
+                    //await fetch(url)
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    //console.log("Data::", data)
+                }
+              },
+
+              saveItemAndInvoice(){
+                 
+                 this.show_receipt = true
+                 this.saveItemTransaction(this.cart)
+                 this.saveInvoice()
+                 this.downloadInvoice()
+                 //this.show_receipt = false
+              }
+
+
+            }
+          })
+
+      </script>
+
+{% endblock %}

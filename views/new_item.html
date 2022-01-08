@@ -1,0 +1,111 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} New Item {% endblock %}
+
+{% block content %}
+
+    <div class="container">
+        
+        <div class="row" style="margin-top: 2em;">
+            
+
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                
+                {% if res == "success" %}
+                    <div class="alert alert-success" role="alert">
+                        New Item Created
+                    </div>
+                {% endif %}
+                {% if res == "error" %}
+                    <div class="alert alert-danger" role="alert">
+                        Error Creating Item(s)
+                    </div>
+                {% endif %}
+                <form method="post" action="/new_item">
+
+                    <div class="mb-3">
+                        <label for="id" class="form-label">ID</label>
+                        <input type="text" class="form-control" name='id' id="id" placeholder="Enter Item Id">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" name='name' id="name" placeholder="Enter Item name">
+                    </div>
+    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="category" name="category" placeholder="Enter category name">
+                    </div>
+            
+                    <!--<div class="mb-3">
+                        <label for="exampleFormControlInput1" class="form-label">Category</label>
+                        <select class="form-select" aria-label="Default select example">
+                            <option selected>Select Item Category</option>
+                            <option value="1">One</option>
+                            <option value="2">Two</option>
+                            <option value="3">Three</option>
+                        </select>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#newCategoryModal">Add Category</a>
+                    </div>-->
+            
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="text" class="form-control" id="price" name="price" placeholder="Enter Item Price">
+                    </div>
+            
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Enter Item Quantity">
+                    </div>
+    
+                    <div class="mb-3">
+                        <input type="submit" name="add_item" value="Add Item" class="btn btn-primary"/>
+                    </div>
+
+                </form>
+                <hr/>
+
+                <form enctype="multipart/form-data" method="POST" action="/upload_item">
+                    <h5>Import From Excel/CSV/MySQL File</h5>
+                    <div class="mb-3">
+                        <label for="excel" class="form-label">Excel File/CSV File/MySQL File</label>
+                        <input type="file" class="form-control" id="excel" name="itemsfile" placeholder="Select Excel File">
+                    </div>
+                    <div class="mb-3">
+                        <input type="submit" value="Import From Excel" class="btn btn-primary"/>
+                    </div>
+                </form>
+                <hr/>
+
+
+
+                </form>
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+
+    </div>
+
+    <script>
+        new Vue({
+            delimiters : ['[[',']]'],
+            el: "#app",
+            data: {
+
+            },
+            methods: {
+                importFromExcel(){
+
+                },
+
+                importFromMySQL(){
+
+                }
+            }
+        })
+    </script>
+    
+
+{% endblock %}
