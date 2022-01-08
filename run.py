@@ -77,11 +77,11 @@ def do_upload():
         cursor.execute("SELECT * FROM Items")
         all_items = cursor.fetchall()
         for ait in all_items:
-            item_code = ait['id']
-            name = ait['name']
-            category = ait['category']
-            price = ait['price']
-            quantity = ait['quantity']
+            item_code = ait['idcode']
+            name = ait['Name']
+            category = ait['Category']
+            price = ait['Price']
+            quantity = ait['Qty']
             if name != None or category != None or price != None or quantity != None:
                 POS.add_item(item_idcode=item_code, item_name=name, item_category=category, item_price=price, quantity=quantity)
         return template('new_item', res="success")
