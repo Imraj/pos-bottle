@@ -285,8 +285,8 @@ def save_invoice(invoiceId,cartItems,cartPrices,cartQty,totalPrice,Tax,dateTime,
 
     try:
         print("cartItems: {}={}".format(cartItems, cartPrices))
-        POS.SaveInvoice(invoiceId, str(cartItems), str(cartPrices), str(cartQty), totalPrice, Tax, str(dateTime), customerPNO,
-    paymentMethod, paidAmount,paymentId,cashierIdName)
+        POS.SaveInvoice(invoiceId, str(cartItems), str(cartPrices), str(cartQty), totalPrice, Tax, str(dateTime), 
+        customerPNO, paymentMethod, paidAmount,paymentId,cashierIdName)
         return {"res": "success"}
     except:
         print("Error saving invoice.")

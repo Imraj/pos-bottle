@@ -113,7 +113,7 @@ def GetAllTransaction(): # Get All Transictons.
 
 ###....for Daily routine sales.
 ###>>> We use InvoicesDB to generate printed & electronic Invoices. 
-def SaveInvoice(TransID,Invoice_datetime,Cart_items_idcodes,Cart_items_prices,Cart_items_Qty,totall_price,TAXs,dateTime,Payment_ID,Costumer_PNO,CashierID_Name,Payment_Method,paidAmount):
+def SaveInvoice(TransID,Cart_items_idcodes,Cart_items_prices,Cart_items_Qty,totall_price,TAXs,dateTime,Costumer_PNO,Payment_Method,paidAmount,Payment_ID,CashierID_Name):
   #Cart_items_idcodes=[str(int) for int in Cart_items_idcodes]
   #Cart_items_idcodes=",".join(Cart_items_idcodes)
   #Cart_items_prices=[str(int) for int in Cart_items_prices]

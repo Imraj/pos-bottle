@@ -197,8 +197,7 @@ def SaveInvoice(invId, cartItems, cartPrices, cartQty, totalPrice, tax, dateTime
 
    pushdb.SaveInvoice(
 	   	invId, cartItems, cartPrices, cartQty, totalPrice, tax, dateTime, customerPNO,
-   		paymentMethod, paidAmount,paymentId,cashierIdName
-	)
+   		paymentMethod, paidAmount,paymentId,cashierIdName)
 
 def Saveinvoice(InvID,CashierID_Name,Costumer_PNO,Payment_ID,Payment_Method="CASH",StoreName="NULL"):
 	Invoice_datetime=int(time.strftime("%Y%m%d%H%M"))#yr,month,day,Hour,min.
