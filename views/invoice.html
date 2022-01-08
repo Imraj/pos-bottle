@@ -209,13 +209,19 @@
             let ciq = cartItemQty.split(")")
 
             for(let c in cid){
-              
-              this.invdetails.push({
-                transId: transId,
-                invoiceItems: cid[c],
-                invoicePrices: cip[c],
-                invoiceQty: ciq[c]
-              })
+              if(cid[c] != ''){
+                let itemId = cid[c]
+                const response = await fetch("/item_api/" + itemId );
+                const data = await response.json();
+                let itemName = data["name"]
+
+                this.invdetails.push({
+                  transId: transId,
+                  invoiceItems: itemName,
+                  invoicePrices: cip[c],
+                  invoiceQty: ciq[c]
+                })
+              }
             }
 
             
