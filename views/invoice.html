@@ -8,7 +8,7 @@
 
     <div style="margin-top: 2em;">
 
-        <b-table striped hover :fields="fields" ref="invoice" :items="invoice">
+        <b-table striped hover :fields="fields" :items="invoice">
             
         </b-table>
 
@@ -18,7 +18,7 @@
 
         <div class="row">
              
-            <div id="invoice-POS">
+            <div id="invoice-POS" ref="invoice">
     
                 <center id="top">
                   <div class="logo"></div>
@@ -229,7 +229,7 @@
         },
         methods: {
             downloadInvoice(){
-                    alert("Hello World")
+                    //alert("Hello World")
                     const { jsPDF } = window.jspdf;
                     var doc = new jsPDF('p', 'pt', 'A4');
                     margins = {
