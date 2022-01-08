@@ -36,7 +36,7 @@
                   <div class="info">
                     <p align="left"> 
                       Invoice ID: [[ inv.invoiceId ]] </br>
-                      Invoice Date Time: **/**/**** (12:00)
+                      Invoice Date Time: [[ cdateTime ]]
                       
                     </p>
                     
@@ -176,11 +176,12 @@
             let subtotalPrice = invoice[4]
             let tax = invoice[5]
             let dateTime = invoice[6]
-            let paymentId = invoice[9]
+            this.cdateTime = dateTime
+            let paymentId = invoice[10]
             let customerPNO = invoice[7]
-            let cashier = invoice[10]
+            let cashier = invoice[11]
             let paymentMethod = invoice[8]
-            let paidAmount = invoice[11]
+            let paidAmount = invoice[9]
 
             this.inv.invoiceId = transId
             this.inv.cashier = cashier
@@ -194,7 +195,7 @@
             //TAXs,Payment_ID,Costumer_PNO,CashierID_Name,Payment_Method
             this.invoice.push({ 
                                     transId: transId, 
-                                    invDate: invDateTime, 
+                                    invDate: dateTime, 
                                     subtotalPrice: subtotalPrice, 
                                     tax: tax,
                                     paymentId: paymentId,
