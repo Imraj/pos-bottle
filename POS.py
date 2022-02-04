@@ -16,6 +16,10 @@ def get_items_count():
 	print("CCount1: {}".format(c[0]))
 	return int(c[0])
 
+def get_item_quantity(item_idcode):
+	qty = pushdb.GetItemQuantity()
+	return qty
+
 def get_transaction_count():
 	c = pushdb.GetTransactionCount()
 	return int(c[0])

@@ -32,6 +32,11 @@ def GetItemsCount():
   count = cruItems.fetchone()
   return count
 
+def GetItemQuantity(item_idcode):
+  cruItems.execute('''SELECT Qty from Items WHERE idcode=?''',(item_idcode))
+  qty = cruItems.fetchone()
+  return qty
+
 def GetTransactionCount():
   cruitemtrans.execute('SELECT Count(*) FROM ItemsTranscitions')
   count = cruitemtrans.fetchone()

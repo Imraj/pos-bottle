@@ -208,10 +208,10 @@
                     for (var o in dataObject) {
                         var innerValue = dataObject[o]===null?'':dataObject[o].toString();
                         var result = innerValue.replace(/"/g, '""');
-                        result = '"' + result + '"';
+                        
                         dataArray.push(result);
                     }
-                    return dataArray.join(' ') + '\r\n';
+                    return dataArray.join(',') + '\r\n';
                 },
 
                 exportToCSV(arrayOfObjects,fileName) {
@@ -227,7 +227,9 @@
 
                     var self = this
                     arrayOfObjects.forEach(function(item){
+                        console.log("item:", item)
                         csvContent += self.objectToCSVRow(item);
+                        csvContent += "\n";
                     }); 
 
                     var encodedUri = encodeURI(csvContent);

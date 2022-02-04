@@ -4,8 +4,6 @@
 
 {% block content %}
 
-    
-
     <div class="container" id="app" style="margin-top: 2em;">
 
         <div class="row">
@@ -43,7 +41,18 @@
               </li>
             </ul>
           </div> 
+          <div class="col-md-5"></div>
+          <div class="col-md-1">
+            <Button  variant="danger" @click="startNewCart()">X</Button>
+          </div>
         </div>
+
+        <div class="row" v-if="quantity_check">
+          <div class="col-md-6">
+            <b-alert show variant="danger">Quantity added must be less than stock</b-alert>
+          </div>
+        </div>
+        
 
         <div class="row" style="margin-top: 2em;">
           <b-table striped hover :fields="fields" :items="cart">
@@ -126,8 +135,9 @@
                     <div class="col-md-6">
                       <div class="mb-3">
                           <label for="customerPNO" class="form-label">Paid Amount</label>
-                          <input type="text" required class="form-control" id="paidAmount" v-model="paidAmount" name="paidAmount" placeholder="Enter Paid Amount" />
-                      </div>
+                          <input type="text" required class="form-control" id="paidAmount" @change="checkPaidAmount()" v-model="paidAmount" name="paidAmount" placeholder="Enter Paid Amount" />
+                          <b-alert v-if="paid_amount_check == true" show variant="danger">Paid Amount must be greater than total</b-alert>
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -279,7 +289,7 @@
           <div class="col-md-1"></div>
           <div class="col-md-9 float-end">
               <div class="d-grid gap-2">
-                  <button class="btn btn-success" @click="saveItemAndInvoice()" :disabled="inv.customerPNO == '' || inv.paymentMethod == '' " type="button">Save Invoice</button>
+                  <button class="btn btn-success" @click="saveItemAndInvoice()" :disabled="inv.customerPNO == '' || inv.paymentMethod == '' || paidAmount < taxTotal " type="button">Save Invoice</button>
               </div>
           </div>
           <div class="col-md-2"></div>
@@ -328,7 +338,9 @@
               cdateTime: '',
               download_invoice: true,
               show_receipt: false,
-              paidAmount: 0
+              paidAmount: 0,
+              quantity_check: false,
+              paid_amount_check: false
             },
             
 
@@ -344,7 +356,7 @@
                     let cat = item[2]
                     let price = item[3]
                     let qty = item[4]
-                    this.items.push({ del: 'test', name: name, price: price, quantity: this.quantity, edit: false, id: id.toString()})
+                    this.items.push({ del: 'test', name: name, price: price, totalQty: qty, quantity: this.quantity, edit: false, id: id.toString()})
                 }
                 for(index in this.items){
                   this.items[index].total = this.items[index].price * this.items[index].quantity
@@ -359,16 +371,33 @@
                   return p * qty
               },
               addItemToCart: function(){
+
+                
                 let ans = this.items.filter(item => item.id == this.search);
                 let answ = ans[0]
-                this.cart.push({ del: 'test', name: answ['name'], price: answ['price'], quantity: this.quantity, total: 0, edit: false, id: answ['id'].toString()})
+                console.log("Ans::Ans", answ['totalQty'])
+                if(this.quantity < answ['totalQty']){
+                  this.cart.push({ del: 'test', name: answ['name'], price: answ['price'], totalQty: answ['totalQty'], quantity: this.quantity, total: 0, edit: false, id: answ['id'].toString()})
 
-                this.arrowCounter = -1;
-                this.isOpen = false;
+                  this.arrowCounter = -1;
+                  this.isOpen = false;
+                  
+                  this.liveTotal += (this.quantity * answ['price'])
+                  this.wTaxTotal += (this.quantity * answ['price'])
+                  this.taxTotal = this.wTaxTotal + (0.05 * (this.wTaxTotal))
+                }
+                else{
+                  this.quantity_check = true
+                }
                 
-                this.liveTotal += (this.quantity * answ['price'])
-                this.wTaxTotal += (this.quantity * answ['price'])
-                this.taxTotal = this.wTaxTotal + (0.05 * (this.wTaxTotal))
+              },
+
+              checkPaidAmount(){
+                  if(this.paidAmount < this.taxTotal){
+                    this.paid_amount_check = true;
+                  }else{
+                    this.paid_amount_check = false;
+                  }
               },
               
               onArrowDown() {
@@ -536,13 +565,27 @@
                     let idcode = item['id']
                     let itemPrice = item['price']
                     let soldItemQty = item['quantity']
-                    //console.log("saveItemTrans:",item, idcode, itemPrice, soldItemQty)
+                    
+                    let totalQty = item['totalQty']
+
+                    let newQty = totalQty - soldItemQty
+                    let update_url = `/api/update_item_quantity/${idcode}/${newQty}`
+                    const response1 = await fetch(update_url)
+                    const data1 = await response1.json();
+                    console.log("item:", item, "totalQty:", totalQty, "NewQty:", newQty, data1)
+
                     let url = "/api/save_transaction/"+idcode+"/"+itemPrice+"/"+soldItemQty
                     //await fetch(url)
                     const response = await fetch(url);
                     const data = await response.json();
                     //console.log("Data::", data)
                 }
+              },
+
+              async updateItemQty(){
+                let get_total_url = `/api/get_item_quantity/${id_code}`
+                let update_url = `/api/update_item_quantity/${id_code}/${quantity}`
+
               },
 
               saveItemAndInvoice(){
@@ -552,6 +595,10 @@
                  this.saveInvoice()
                  this.downloadInvoice()
                  //this.show_receipt = false
+              },
+
+              startNewCart(){
+                 window.location.reload();
               }
 
 

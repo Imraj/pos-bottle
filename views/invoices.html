@@ -26,12 +26,31 @@
                         ></b-form-input>
 
                         <b-input-group-append>
-                        <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+                            <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
                         </b-input-group-append>
                     </b-input-group>
                 </b-form-group>
             </div>
-           
+            <div class="col-md-3"> 
+                <label for="from-datepicker">From</label>
+                <b-form-datepicker id="from-datepicker"
+                     v-model="from_datepicker" 
+                     class="mb-2"
+                     size="sm"
+                     @input="dateChanged()"
+                     >
+                </b-form-datepicker>    
+            </div>
+            <div class="col-md-3"> 
+                <label for="to-datepicker">To</label>
+                <b-form-datepicker id="to-datepicker" 
+                        v-model="to_datepicker" 
+                        size="sm"
+                        class="mb-2"
+                        @input="dateChanged()"
+                        >
+                </b-form-datepicker>    
+            </div>
         </div>
 
         <b-table striped hover 
@@ -88,15 +107,24 @@
           invoices: [
            
           ],
+          all_invoices: null,
           filter: null,
           filterOn: [],
           currentPage: 1,
           totalRows: 1,
           perPage: 10,
-          sortBy: ''
+          sortBy: '',
+
+          datepicker: "",
+          from_datepicker: "",
+          to_datepicker: new Date(),
          
         },
         mounted: async function(){
+            let date = new Date()
+            date.setFullYear(date.getFullYear() - 1)
+            this.from_datepicker = date
+
             const response = await fetch("/api/invoices");
             const data = await response.json();
            
@@ -106,16 +134,16 @@
                 let invoice = invoices[i]
                 console.log("New Invoice ", invoice)
                 let transId = invoice[0]
-                let invDateTime = invoice[1]
+                let invDateTime = invoice[6]
                 let cartItemsId = invoice[2]
                 let cartItemPrices = invoice[3]
                 let cartItemQty = invoice[4]
-                let subtotalPrice = invoice[5]
-                let tax = invoice[6]
+                let subtotalPrice = invoice[4]
+                let tax = invoice[5]
                 let paymentId = invoice[10]
-                let customerPNO = invoice[8]
-                let cashier = invoice[9]
-                let paymentMethod = invoice[7]
+                let customerPNO = invoice[7]
+                let cashier = invoice[11]
+                let paymentMethod = invoice[8]
                 //TransID,Invoice_datetime,Cart_items_idcodes,Cart_items_prices,Cart_items_Qty,totall_price,
                 //TAXs,Payment_ID,Costumer_PNO,CashierID_Name,Payment_Method
                 this.invoices.push({ 
@@ -129,15 +157,46 @@
                                      paymentMethod: paymentMethod,
                                   })
                 this.totalRows = this.invoices.length
+                this.all_invoices = this.invoices
             }
         },
         methods: {
-
+            onContext(ctx) {
+                if(ctx.selectedYMD != ""){
+                    this.datepicker = ctx.selectedYMD;
+                    let dp = this.datepicker
+                    this.datepicker = dp.replaceAll("-", "");
+                    
+                    this.filter = this.datepicker;
+                }
+            },
             onFiltered(filteredItems) {
                 // Trigger pagination to update the number of buttons/pages due to filtering
                 this.totalRows = filteredItems.length
                 this.currentPage = 1
-            }
+            },
+            changeDateFormat(d){
+
+                let date = new Date(d)
+                let year = date.getFullYear()
+                let month = ('0' + (date.getMonth() + 1)).slice(-2)
+                let day = ('0' + date.getDate()).slice(-2)
+                return `${year}${month}${day}`
+
+            },
+
+            dateChanged(){
+
+                let from = this.changeDateFormat(this.from_datepicker)
+                let to = this.changeDateFormat(this.to_datepicker)
+
+                this.invoices = this.all_invoices.filter((inv, index)=>{ 
+                    let dt = this.changeDateFormat(inv.invDate)
+                    console.log("DT::", dt)
+                    return parseInt(dt.toString().substring(0,8)) >= parseInt(from) && parseInt(dt.toString().substring(0,8)) <= parseInt(to)
+                })
+                this.totalRows = this.invoices.length;
+            },
 
         }
     })

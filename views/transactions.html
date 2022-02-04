@@ -8,10 +8,20 @@
     <div class="container" id="app">
 
         <div style="margin-top: 2em;">
-            <b-button @click="exportAll()" variant="primary">Export All</b-button>
+            <div class="row">
+                <div class="col-2">
+                    <b-button @click="exportAll()" variant="primary">Export All</b-button>
+                </div>
+                <div class="col-2">
+                    <b-form-input v-model="selectedItem" placeholder="Item" options="itemOptions" ></b-form-input>
+                </div>
+                <div class="col-2">
+                    <b-button @click="exportItem()" variant="outline-primary">Export Item</b-button>
+                </div>
+               
+
+            </div>
             
-            <b-form-select v-model="selectedItem" :options="itemOptions" size="lg" class="mt-3"></b-form-select>
-            <b-button @click="exportItem()" variant="outline-primary">Export Item</b-button>
         
             <div class="row">
                 <div class="col-md-6">
@@ -31,10 +41,40 @@
                             ></b-form-input>
     
                             <b-input-group-append>
-                            <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+                                <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+                               
                             </b-input-group-append>
+                            
                         </b-input-group>
                     </b-form-group>
+                </div>
+               
+                <div class="col-md-3"> 
+                    <label for="from-datepicker">From</label>
+                    <b-form-datepicker id="from-datepicker" 
+                            size="sm" 
+                            v-model="from_datepicker" 
+                            class="mb-2"
+                            today-button
+                            reset-button
+                            close-button
+                            @input="dateChanged()"
+                            >
+                    </b-form-datepicker>    
+                </div>
+                <div class="col-md-3"> 
+                    <label for="to-datepicker">To</label>
+                    <b-form-datepicker id="to-datepicker" 
+                                size="sm" 
+                                v-model="to_datepicker"  
+                                value-as-date 
+                                class="mb-2"
+                                today-button
+                                reset-button
+                                close-button
+                                @input="dateChanged()"
+                                >
+                    </b-form-datepicker>    
                 </div>
             </div>
 
@@ -85,12 +125,16 @@
               transactions: [
                
               ],
+              all_transactions: null,
               filter: null,
               filterOn: [],
               currentPage: 1,
               totalRows: 0,
               perPage: 10,
               sortBy: 'dateTime',
+              datepicker: "",
+              from_datepicker: "",
+              to_datepicker: new Date(),
 
               selectedCategory: '',
               categoryOptions: [],
@@ -99,6 +143,11 @@
              
             },
             mounted: async function(){
+                
+                let date = new Date()
+                date.setFullYear(date.getFullYear() - 1)
+                this.from_datepicker = date
+
                 const response = await fetch("/transactions_api");
                 const data = await response.json();
                
@@ -118,9 +167,41 @@
                 this.totalRows = this.transactions.length
                 this.itemOptions =[...new Set(this.itemOptions)]
                 this.selectedItem = this.itemOptions[0]
+                this.all_transactions = this.transactions
                 
             },
             methods: {
+                onContext(ctx) {
+                    if(ctx.selectedYMD != ""){
+                        this.datepicker = ctx.selectedYMD;
+                        let dp = this.datepicker
+                        this.datepicker = dp.replaceAll("-", "");
+                        
+                        this.filter = this.datepicker;
+                    }
+                },
+
+                changeDateFormat(d){
+
+                    let date = new Date(d)
+                    let year = date.getFullYear()
+                    let month = ('0' + (date.getMonth() + 1)).slice(-2)
+                    let day = ('0' + date.getDate()).slice(-2)
+                    return `${year}${month}${day}`
+
+                },
+
+                dateChanged(){
+
+                    let from = this.changeDateFormat(this.from_datepicker)
+                    let to = this.changeDateFormat(this.to_datepicker)
+                    
+                    this.transactions = this.all_transactions.filter((trans, index)=>{ 
+                        return parseInt(trans.dateTime.toString().substring(0,8)) >= parseInt(from) && parseInt(trans.dateTime.toString().substring(0,8)) <= parseInt(to)
+                    })
+                    this.totalRows = this.transactions.length;
+                },
+
                 onFiltered(filteredItems) {
                     // Trigger pagination to update the number of buttons/pages due to filtering
                     this.totalRows = filteredItems.length
@@ -144,11 +225,11 @@
                     var dataArray = new Array;
                     for (var o in dataObject) {
                         var innerValue = dataObject[o]===null?'':dataObject[o].toString();
-                        var result = innerValue.replace(/"/g, '""');
-                        result = '"' + result + '"';
+                        var result = innerValue.replaceAll(/"/g, '""');
+                       
                         dataArray.push(result);
                     }
-                    return dataArray.join(' ') + '\r\n';
+                    return dataArray.join(',') + '\r\n';
                 },
 
                 exportToCSV(arrayOfObjects,fileName) {
