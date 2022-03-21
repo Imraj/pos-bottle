@@ -299,10 +299,7 @@
 
       </div>
 
-      
-
       <script type="application/javascript">
-
           new Vue({
             delimiters : ['[[',']]'],
             el: '#app',
@@ -361,7 +358,6 @@
                 for(index in this.items){
                   this.items[index].total = this.items[index].price * this.items[index].quantity
                 }
-                
             },
 
             methods: {
@@ -376,15 +372,29 @@
                 let ans = this.items.filter(item => item.id == this.search);
                 let answ = ans[0]
                 console.log("Ans::Ans", answ['totalQty'])
-                if(this.quantity < answ['totalQty']){
-                  this.cart.push({ del: 'test', name: answ['name'], price: answ['price'], totalQty: answ['totalQty'], quantity: this.quantity, total: 0, edit: false, id: answ['id'].toString()})
-
-                  this.arrowCounter = -1;
-                  this.isOpen = false;
+                if(this.quantity <= answ['totalQty']){
                   
-                  this.liveTotal += (this.quantity * answ['price'])
-                  this.wTaxTotal += (this.quantity * answ['price'])
-                  this.taxTotal = this.wTaxTotal + (0.05 * (this.wTaxTotal))
+                  let existingItem = this.cart.filter((item) => item.name == answ['name'])
+                  if(existingItem.length != 0){
+                    this.cart.filter((item) => {
+                      if(item.name == answ['name']){
+                        if(parseInt(item.quantity) + parseInt(this.quantity) < answ['totalQty']){
+                          item.quantity = parseInt(item.quantity) + parseInt(this.quantity)
+                        }
+                      }
+                    })
+                  }
+                  else if(existingItem.length == 0){
+                    this.cart.push({ del: 'test', name: answ['name'], price: answ['price'], totalQty: answ['totalQty'], quantity: this.quantity, total: 0, edit: false, id: answ['id'].toString()})
+
+                    this.arrowCounter = -1;
+                    this.isOpen = false;
+
+                    this.liveTotal += (this.quantity * answ['price'])
+                    this.wTaxTotal += (this.quantity * answ['price'])
+                    this.taxTotal = this.wTaxTotal + (0.05 * (this.wTaxTotal))
+                  }
+                  
                 }
                 else{
                   this.quantity_check = true
@@ -429,7 +439,7 @@
 
               removeItem : function(index){
                 let ii = this.cart[index]
-                console.log("iiii:",ii)
+                
                 let price = ii.price
                 let qty = ii.quantity
                 let total = price * qty 
@@ -531,7 +541,7 @@
                   let cartItems = ''
                   let cartPrices = ''
                   let cartQty = ''
-                  //console.log("this.cartcart:", this.cart)
+                  
                   for(let k in this.cart){
                      let cc = this.cart[k]
                      console.log("CC:", cc, cc['id'], cc['price'], cc['quantity'])
@@ -575,10 +585,10 @@
                     console.log("item:", item, "totalQty:", totalQty, "NewQty:", newQty, data1)
 
                     let url = "/api/save_transaction/"+idcode+"/"+itemPrice+"/"+soldItemQty
-                    //await fetch(url)
+                    
                     const response = await fetch(url);
                     const data = await response.json();
-                    //console.log("Data::", data)
+                    
                 }
               },
 
